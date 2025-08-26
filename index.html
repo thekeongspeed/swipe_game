@@ -306,7 +306,7 @@
     <form id="user-form">
         <input type="text" id="name-input" placeholder="Nama Lengkap" required>
         <input type="text" id="company-input" placeholder="Nama Perusahaan" required>
-        <input type="tel" id="phone-input" placeholder="Nomer HP (Contoh: 0812...)" required>
+        <input type="tel" id="phone-input" placeholder="Nomer HP (Hanya Angka)" required inputmode="numeric" pattern="[0-9]*" title="Input hanya boleh berisi angka.">
         <button type="submit">Mulai Swipe</button>
     </form>
 </div>
@@ -383,6 +383,21 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeGame();
     }
 
+
+    const phoneInput = document.getElementById('phone-input');
+
+    phoneInput.addEventListener('input', function (e) {
+        // Ambil nilai input saat ini
+        let value = e.target.value;
+        
+        // Gunakan regular expression untuk menghapus semua karakter yang BUKAN angka
+        let numericValue = value.replace(/[^0-9]/g, '');
+        
+        // Setel kembali nilai input hanya dengan angka
+        e.target.value = numericValue;
+    });
+
+    
     // --- FUNGSI ADMIN YANG DIUBAH ---
     async function populateAdminTable() {
         const tableBody = document.getElementById('results-table-body');
@@ -460,9 +475,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const imageData = [
              { url: 'images/images-1.jpeg', title: 'Rak', description: 'Rak sepatu supermarket' },
              { url: 'images/images-2.jpeg', title: 'Rak jajanan', description: 'Jajanan warung Madura' },
-             { url: 'images/images-3.jpeg', title: 'Danau Indah', description: 'Pemandangan danau yang tenang di pagi hari' },
-             { url: 'https://images.unsplash.com/photo-1523531294919-4bcd7c65e216', title: 'Perkotaan Modern', description: 'Pemandangan kota metropolitan dengan arsitektur menakjubkan' },
-             { url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', title: 'Pegunungan', description: 'Keindahan pegunungan dengan pemandangan yang memukau' }
+             { url: 'images/images-3.jpeg', title: 'Rak Gudang', description: 'Rak untuk penyimpanan di gudang atau pabrik' },
+             { url: 'images/images-4.jpg', title: 'Furniture', description: 'Bangku, Meja dan lainnya untuk restoran / cafe' },
+             { url: 'images/images-5.JPG', title: 'Rak Baju', description: 'Rak untuk menampilkan produk baju' },
+             { url: 'images/images-6.jpg', title: 'Rak Gudang', description: 'Rak untuk penyimpanan di gudang atau pabrik' },
+             { url: 'images/images-7.JPG', title: 'Rak Kosmetik', description: 'Untuk memajang produk kosmetik anda' },
         ];
         
         // User data and state
