@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Swipe Counter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0047AB, #0047AB);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        #input-container, #app-container, #admin-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        #admin-panel {
+            max-width: 900px; /* Lebarkan panel admin */
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        #user-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        input {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #6e8efb;
+        }
+        
+        button {
+            padding: 15px;
+            background: linear-gradient(to right,  #0047AB, #0047AB);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+       .swipe-container {
+            position: relative;
+            height: 600px; /* Tingkatkan tinggi total container */
+            margin: 20px 0;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        
+        .card-image {
+            height: 500px; 
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .card-content {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .card-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .results {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result-box {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-box h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .result-box p {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        ul {
+            list-style-type: none;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+        
+        .instructions {
+            margin: 15px 0;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .like-overlay, .nope-overlay {
+            position: absolute;
+            top: 20px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        
+        .like-overlay {
+            left: 20px;
+            background-color: rgba(76, 175, 80, 0.8);
+            color: white;
+            border: 2px solid #4CAF50;
+        }
+        
+        .nope-overlay {
+            right: 20px;
+            background-color: rgba(244, 67, 54, 0.8);
+            color: white;
+            border: 2px solid #F44336;
+        }
+        
+        .swipe-hint {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: rgba(0, 0, 0, 0.5);
+            font-style: italic;
+            z-index: 5;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 0 0 15px 15px;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(to right, #0047AB, #0047AB);
+            margin-top: 20px;
+        }
+
+        #clear-data-btn {
+            background: linear-gradient(to right,  #0047AB, #0047AB);
+            margin-top: 20px;
+        }
+        
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 130px;
+        }
+        
+        /* Admin Table Styles */
+        .admin-table-container {
+            max-height: 60vh;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        thead {
+            background-color: #f4f6f8;
+            position: sticky;
+            top: 0;
+        }
+        th {
+            font-weight: bold;
+            color: #333;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="input-container">
+    <h1>Masukkan Data Anda</h1>
+    <form id="user-form">
+        <input type="text" id="name-input" placeholder="Nama Lengkap" required>
+        <input type="text" id="company-input" placeholder="Nama Perusahaan" required>
+        <input type="tel" id="phone-input" placeholder="Nomer HP (Contoh: 0812...)" required>
+        <button type="submit">Mulai Swipe</button>
+    </form>
+</div>
+
+    <div id="app-container" class="hidden">
+        <h1 id="welcome-message">Selamat Datang di Spectrum Swipe Game</h1>
+        <p class="instructions">Gunakan mouse/touch untuk menggeser gambar ke kanan (suka) atau kiri (tidak suka)</p>
+
+        <div class="swipe-container" id="swipe-container">
+            <div class="like-overlay">DISUKAI</div>
+            <div class="nope-overlay">DITOLAK</div>
+            <div class="swipe-hint">Geser ke kiri atau kanan →</div>
+        </div>
+
+        <div class="results">
+            <div class="result-box">
+                <h3>Ditolak (Kiri)</h3>
+                <p>Jumlah: <span id="nope-count">0</span></p>
+                <ul id="noped-list"></ul>
+            </div>
+            <div class="result-box">
+                <h3>Disukai (Kanan)</h3>
+                <p>Jumlah: <span id="like-count">0</span></p>
+                <ul id="liked-list"></ul>
+            </div>
+        </div>
+        
+        <button class="restart-btn" id="restart-btn">Mulai Ulang</button>
+    </div>
+
+    <div id="admin-panel" class="hidden">
+        <h1>Data Hasil Swipe</h1>
+        <div class="admin-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Nama</th>
+                        <th>Perusahaan</th>
+                        <th>No. HP</th>
+                        <th>Disukai</th>
+                        <th>Ditolak</th>
+                    </tr>
+                </thead>
+                <tbody id="results-table-body">
+                    </tbody>
+            </table>
+        </div>
+        <button id="clear-data-btn">Hapus Semua Data</button>
+    </div>
+
+
+   <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // URL ke backend API Anda
+    const API_URL = '/api/results';
+
+    // Check for admin view first
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.has('admin');
+
+    const inputContainer = document.getElementById('input-container');
+    const appContainer = document.getElementById('app-container');
+    const adminPanel = document.getElementById('admin-panel');
+
+    if (isAdmin) {
+        // Show admin panel and hide others
+        inputContainer.classList.add('hidden');
+        appContainer.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        populateAdminTable();
+    } else {
+        // Run the game logic
+        initializeGame();
+    }
+
+    // --- FUNGSI ADMIN YANG DIUBAH ---
+    async function populateAdminTable() {
+        const tableBody = document.getElementById('results-table-body');
+        tableBody.innerHTML = '<tr><td colspan="6">Memuat data...</td></tr>';
+        
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const results = await response.json();
+
+            tableBody.innerHTML = ''; // Clear existing table data
+
+            if (results.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6">Belum ada data yang tersimpan.</td></tr>';
+                return;
+            }
+
+            results.forEach((result, index) => {
+                const row = document.createElement('tr');
+                
+                // liked_items dan noped_items sekarang adalah JSON string dari DB
+                // Kita perlu parse dan map, atau jika sudah di-parse oleh Express, langsung map
+                const likedTitles = result.liked_items.map(item => item.title).join('<br>');
+                const nopedTitles = result.noped_items.map(item => item.title).join('<br>');
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${result.name}</td>
+                    <td>${result.company_name || '-'}</td>
+                    <td>${result.phone}</td>
+                    <td>${likedTitles || '-'}</td>
+                    <td>${nopedTitles || '-'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching admin data:', error);
+            tableBody.innerHTML = '<tr><td colspan="5">Gagal memuat data. Pastikan server backend berjalan.</td></tr>';
+        }
+    }
+
+    // --- EVENT LISTENER TOMBOL HAPUS DATA YANG DIUBAH ---
+    document.getElementById('clear-data-btn').addEventListener('click', async () => {
+        if (confirm('Apakah Anda yakin ingin menghapus semua data hasil swipe dari database? Aksi ini tidak dapat dibatalkan.')) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'DELETE',
+                });
+                if (!response.ok) throw new Error('Gagal menghapus data.');
+                
+                alert('Semua data berhasil dihapus.');
+                populateAdminTable(); // Refresh the table
+            } catch (error) {
+                console.error('Error clearing data:', error);
+                alert('Terjadi kesalahan saat menghapus data.');
+            }
+        }
+    });
+
+    // --- ALL GAME LOGIC IS WRAPPED IN THIS FUNCTION ---
+    function initializeGame() {
+        // ... (semua DOM element dan imageData Anda tetap sama) ...
+        const userForm = document.getElementById('user-form');
+        const nameInput = document.getElementById('name-input');
+        const companyInput = document.getElementById('company-input');
+        const phoneInput = document.getElementById('phone-input');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const swipeContainer = document.getElementById('swipe-container');
+        const likeCount = document.getElementById('like-count');
+        const nopeCount = document.getElementById('nope-count');
+        const likedList = document.getElementById('liked-list');
+        const nopedList = document.getElementById('noped-list');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        const imageData = [
+             { url: 'images/images-1.jpeg', title: 'Rak', description: 'Rak sepatu supermarket' },
+             { url: 'images/images-2.jpeg', title: 'Rak jajanan', description: 'Jajanan warung Madura' },
+             { url: 'images/images-3.jpeg', title: 'Danau Indah', description: 'Pemandangan danau yang tenang di pagi hari' },
+             { url: 'https://images.unsplash.com/photo-1523531294919-4bcd7c65e216', title: 'Perkotaan Modern', description: 'Pemandangan kota metropolitan dengan arsitektur menakjubkan' },
+             { url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', title: 'Pegunungan', description: 'Keindahan pegunungan dengan pemandangan yang memukau' }
+        ];
+        
+        // User data and state
+        let userName = '';
+        let userCompany = '';
+        let userPhone = ''; 
+        let currentIndex = 0;
+        let likedItems = [];
+        let nopedItems = [];
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+        
+        // ... (userForm event listener tetap sama) ...
+        userForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            userName = nameInput.value;
+            userCompany = companyInput.value;
+            userPhone = phoneInput.value;
+            if (userName && userPhone && userCompany) {
+                welcomeMessage.textContent = `Halo ${userName}!Selamat Datang di Game Swipe SPECTRUM UniTec`;
+                inputContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                loadNextCard();
+            }
+        });
+        
+        // ... (restartBtn event listener tetap sama) ...
+         restartBtn.addEventListener('click', function() {
+            currentIndex = 0;
+            likedItems = [];
+            nopedItems = [];
+            likeCount.textContent = '0';
+            nopeCount.textContent = '0';
+            likedList.innerHTML = '';
+            nopedList.innerHTML = '';
+            nameInput.value = '';
+            companyInput.value = '';
+            phoneInput.value = '';
+            appContainer.classList.add('hidden');
+            inputContainer.classList.remove('hidden');
+        });
+
+        // --- FUNGSI SAVE RESULTS YANG DIUBAH ---
+        async function saveResults() {
+            const newResult = {
+                name: userName,
+                company: userCompany,
+                phone: userPhone,
+                liked: likedItems,
+                noped: nopedItems
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newResult),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                console.log('Result saved successfully to database:', data.message);
+
+            } catch (error) {
+                console.error('Failed to save result to database:', error);
+                // Beri tahu pengguna jika gagal menyimpan
+                alert('Gagal menyimpan hasil Anda. Mohon periksa koneksi atau hubungi admin.');
+            }
+        }
+        
+        // ... (Sisa kode game Anda: loadNextCard, setupDragEvents, handleLike, handleNope tetap SAMA) ...
+        // loadNextCard akan memanggil saveResults() di akhir, yang sekarang akan mengirim data ke API.
+        
+        function loadNextCard() {
+             if (currentIndex >= imageData.length) {
+                 swipeContainer.innerHTML = '<div class="card" style="justify-content: center; align-items: center; background: linear-gradient(135deg,  #0047AB, #0047AB);"><div class="card-title" style="color: white; font-size: 24px;">Selesai!</div><div class="card-desc" style="color: white;">Terimakasih telah bermain</div></div>';
+                 saveResults();
+                 return;
+             }
+             
+             const data = imageData[currentIndex];
+             
+             const card = document.createElement('div');
+             card.className = 'card';
+             
+             card.innerHTML = `
+                 <div class="card-image" style="background-image: url(${data.url})"></div>
+                 <div class="card-content">
+                     <div class="card-info">
+                         <div class="card-title">${data.title}</div>
+                         <div class="card-desc">${data.description}</div>
+                     </div>
+                 </div>
+             `;
+             
+             while (swipeContainer.firstChild) {
+                 swipeContainer.removeChild(swipeContainer.firstChild);
+             }
+             
+             const newLikeOverlay = document.createElement('div');
+             newLikeOverlay.className = 'like-overlay';
+             newLikeOverlay.textContent = 'DISUKAI';
+             
+             const newNopeOverlay = document.createElement('div');
+             newNopeOverlay.className = 'nope-overlay';
+             newNopeOverlay.textContent = 'DITOLAK';
+             
+             const newSwipeHint = document.createElement('div');
+             newSwipeHint.className = 'swipe-hint';
+             newSwipeHint.textContent = 'Geser ke kiri atau kanan →';
+             
+             swipeContainer.appendChild(newLikeOverlay);
+             swipeContainer.appendChild(newNopeOverlay);
+             swipeContainer.appendChild(card);
+             swipeContainer.appendChild(newSwipeHint);
+             
+             setupDragEvents(card, newLikeOverlay, newNopeOverlay);
+         }
+         
+         function setupDragEvents(card, likeOverlay, nopeOverlay) {
+             let startX = 0, currentX = 0, isDragging = false;
+             
+             const onDragStart = (e) => {
+                 isDragging = true;
+                 startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                 currentX = startX;
+                 card.style.transition = 'none';
+             };
+             
+             const onDragMove = (e) => {
+                 if (!isDragging) return;
+                 
+                 const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                 e.preventDefault();
+                 
+                 const deltaX = clientX - startX;
+                 card.style.transform = `translateX(${deltaX}px) rotate(${deltaX * 0.05}deg)`;
+                 
+                 if (deltaX > 50) {
+                     likeOverlay.style.opacity = Math.min((deltaX - 50) / 100, 1).toString();
+                     nopeOverlay.style.opacity = '0';
+                 } else if (deltaX < -50) {
+                     nopeOverlay.style.opacity = Math.min((-deltaX - 50) / 100, 1).toString();
+                     likeOverlay.style.opacity = '0';
+                 } else {
+                     likeOverlay.style.opacity = '0';
+                     nopeOverlay.style.opacity = '0';
+                 }
+             };
+             
+             const onDragEnd = () => {
+                 if (!isDragging) return;
+                 isDragging = false;
+                 
+                 card.style.transition = 'transform 0.5s ease';
+                 
+                 const currentTransform = card.style.transform;
+                 const currentTranslateX = parseInt(currentTransform.match(/translateX\(([^)]+)px\)/)?.[1]) || 0;
+                 
+                 if (currentTranslateX > 100) {
+                     card.style.transform = `translateX(1000px) rotate(30deg)`;
+                     handleLike();
+                 } else if (currentTranslateX < -100) {
+                     card.style.transform = `translateX(-1000px) rotate(-30deg)`;
+                     handleNope();
+                 } else {
+                     card.style.transform = 'translateX(0px) rotate(0deg)';
+                 }
+                 
+                 likeOverlay.style.opacity = '0';
+                 nopeOverlay.style.opacity = '0';
+
+                 document.removeEventListener('mousemove', onDragMove);
+                 document.removeEventListener('touchmove', onDragMove);
+                 document.removeEventListener('mouseup', onDragEnd);
+                 document.removeEventListener('touchend', onDragEnd);
+             };
+
+             card.addEventListener('mousedown', (e) => {
+                 onDragStart(e);
+                 document.addEventListener('mousemove', onDragMove);
+                 document.addEventListener('mouseup', onDragEnd);
+             });
+             card.addEventListener('touchstart', (e) => {
+                 onDragStart(e);
+                 document.addEventListener('touchmove', onDragMove);
+                 document.addEventListener('touchend', onDragEnd);
+             }, { passive: true });
+         }
+         
+         function handleLike() {
+             const currentData = imageData[currentIndex];
+             likedItems.push(currentData);
+             likeCount.textContent = likedItems.length;
+             
+             const li = document.createElement('li');
+             li.textContent = currentData.title;
+             likedList.appendChild(li);
+             
+             setTimeout(() => {
+                 currentIndex++;
+                 loadNextCard();
+             }, 500);
+         }
+         
+         function handleNope() {
+             const currentData = imageData[currentIndex];
+             nopedItems.push(currentData);
+             nopeCount.textContent = nopedItems.length;
+             
+             const li = document.createElement('li');
+             li.textContent = currentData.title;
+             nopedList.appendChild(li);
+             
+             setTimeout(() => {
+                 currentIndex++;
+                 loadNextCard();
+             }, 500);
+         }
+    } // End of initializeGame function
+});
+</script>
+</body>
+</html>
